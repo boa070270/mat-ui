@@ -1,0 +1,65 @@
+<ng-template #input let-appearance="appearance" let-title="title" let-type="type" let-placeholder="placeholder" let-controlName="controlName"
+             let-iconName="iconName" let-prefix="prefix" let-suffix="suffix" let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+  <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
+    <mat-label>{{title}}</mat-label>
+    <input matInput [type]="type" [placeholder]="placeholder" [formControl]="formControlByName(controlName)" [required]="required">
+    <span *ngIf="prefix" matPrefix>$&nbsp;</span>
+    <span *ngIf="suffix" matSuffix>.00</span>
+    <mat-icon *ngIf="iconName" matSuffix>{{iconName}}</mat-icon>
+    <mat-hint>{{hint}}</mat-hint>
+    <mat-error *ngIf="formControlByName(controlName).getError('required')" class="mat-error"></mat-error>
+  </mat-form-field>
+</ng-template>
+<ng-template #textarea let-appearance="appearance" let-title="title" let-placeholder="placeholder" let-controlName="controlName"
+             let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+  <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
+    <mat-label>{{title}}</mat-label>
+    <textarea matInput [placeholder]="placeholder" [formControl]="formControlByName(controlName)" [required]="required"></textarea>
+    <mat-hint>{{hint}}</mat-hint>
+    <mat-error *ngIf="formControlByName(controlName).getError('required')" class="mat-error"></mat-error>
+  </mat-form-field>
+</ng-template>
+<ng-template #password let-appearance="appearance" let-title="title" let-placeholder="placeholder" let-controlName="controlName"
+             let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+  <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
+    <mat-label>{{title}}</mat-label>
+    <input matInput [type]="hide ? 'password' : 'text'" [placeholder]="placeholder" [formControl]="formControlByName(controlName)" [required]="required">
+    <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+      <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+    </button>
+    <mat-hint>{{hint}}</mat-hint>
+  </mat-form-field>
+</ng-template>
+<ng-template #select let-appearance="appearance" let-title="title" let-placeholder="placeholder" let-controlName="controlName"
+             let-options="options" let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+  <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
+    <mat-label>{{title}}</mat-label>
+    <mat-select [required]="required">
+      <mat-option *ngFor="let option of options" value="{{option.value}}">{{option.name}}</mat-option>
+    </mat-select>
+    <mat-hint>{{hint}}</mat-hint>
+  </mat-form-field>
+</ng-template>
+<ng-template #group let-formControls="formControls" let-formConfigs="formConfigs" let-formGroup="formGroup">
+  <div [formGroup]="formGroup">
+    <lib-form-fields [formConfiguration]="formConfigs" [formControlCollections]="formControls"></lib-form-fields>
+  </div>
+</ng-template>
+<ng-container *ngFor="let item of formConfiguration">
+  <ng-container *ngIf="item.kindOfField === enumKindOfField.input && item.type === enumInputType.password">
+    <ng-template [ngTemplateOutlet]="password" [ngTemplateOutletContext]="item"></ng-template>
+  </ng-container>
+  <ng-container *ngIf="item.kindOfField === enumKindOfField.input && item.type !== enumInputType.password">
+    <ng-template [ngTemplateOutlet]="input" [ngTemplateOutletContext]="item"></ng-template>
+  </ng-container>
+  <ng-container *ngIf="item.kindOfField === enumKindOfField.select">
+    <ng-template [ngTemplateOutlet]="select" [ngTemplateOutletContext]="item"></ng-template>
+  </ng-container>
+  <ng-container *ngIf="item.kindOfField === enumKindOfField.textarea">
+    <ng-template [ngTemplateOutlet]="textarea" [ngTemplateOutletContext]="item"></ng-template>
+  </ng-container>
+  <ng-container *ngIf="item.kindOfField === enumKindOfField.group">
+    <ng-template [ngTemplateOutlet]="group"
+                 [ngTemplateOutletContext]="{formConfigs: item.group, formControls: childControlCollectionByName(item.controlName), formGroup: formControlByName(item.controlName)}"></ng-template>
+  </ng-container>
+</ng-container>

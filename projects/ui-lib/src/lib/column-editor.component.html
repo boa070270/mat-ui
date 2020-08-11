@@ -1,0 +1,19 @@
+<div cdkDropListGroup>
+  <div class="example-container">
+    <h2>Displayed</h2>
+    <div cdkDropList [cdkDropListData]="displayed" class="example-list" (cdkDropListDropped)="drop($event)">
+      <div class="example-box" *ngFor="let item of displayed" cdkDrag>{{item.columnName}}</div>
+    </div>
+  </div>
+
+  <div class="example-container">
+    <h2>Hidden</h2>
+    <div cdkDropList [cdkDropListData]="hidden" class="example-list" (cdkDropListDropped)="drop($event)">
+      <div class="example-box" *ngFor="let item of hidden" cdkDrag>{{item.columnName}}</div>
+    </div>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()" style="width: 30%">Cancel</button>
+  <button mat-button (click)="finish()" cdkFocusInitial style="width: 30%">Finish</button>
+</div>

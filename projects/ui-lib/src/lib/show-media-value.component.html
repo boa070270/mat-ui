@@ -1,0 +1,10 @@
+<div (click)="play()">
+  <ng-template [ngIf]="mediaType.startsWith('video')" [ngIfElse]="showImage">
+    <video width="98px" height="98px">
+      <source src="{{mediaURI}}" type="{{mediaType}}">
+    </video>
+  </ng-template>
+  <ng-template #showImage>
+    <img width="98px" height="98px" src="{{mediaURI}}" alt="">
+  </ng-template>
+</div>
