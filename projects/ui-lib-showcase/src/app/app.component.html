@@ -1,2 +1,8 @@
 <p>app-component</p>
-<lib-dynamic-form [configuration]="formConfiguration"></lib-dynamic-form>
+<form [formGroup]="formGroup">
+  <lib-form-fields [formGroup]="formGroup" [formConfiguration]="formConfiguration"></lib-form-fields>
+</form>
+<div></div>
+<button (click)="showForm()">Show Value</button>
+<div></div>
+<span>{{showPlace}}</span>

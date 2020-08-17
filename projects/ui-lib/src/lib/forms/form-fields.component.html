@@ -1,5 +1,7 @@
 <ng-template #input let-appearance="appearance" let-title="title" let-type="type" let-placeholder="placeholder" let-controlName="controlName"
-             let-iconName="iconName" let-prefix="prefix" let-suffix="suffix" let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+             let-iconName="iconName" let-prefix="prefix" let-suffix="suffix" let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass"
+             let-validationMessages="validationMessages"
+>
   <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
     <mat-label>{{title}}</mat-label>
     <input matInput [type]="type" [placeholder]="placeholder" [formControl]="formControlByName(controlName)" [required]="required">
@@ -7,20 +9,32 @@
     <span *ngIf="suffix" matSuffix>.00</span>
     <mat-icon *ngIf="iconName" matSuffix>{{iconName}}</mat-icon>
     <mat-hint>{{hint}}</mat-hint>
-    <mat-error *ngIf="formControlByName(controlName).getError('required')" class="mat-error"></mat-error>
+    <mat-error *ngFor="let validation of validationMessages">
+      <mat-error class="error-message" *ngIf="formControlByName(controlName).hasError(validation.type) && (formControlByName(controlName).dirty || formControlByName(controlName).touched)">
+        {{validation.message(formControlByName(controlName).getError(validation.type))}}
+      </mat-error>
+    </mat-error>
   </mat-form-field>
 </ng-template>
 <ng-template #textarea let-appearance="appearance" let-title="title" let-placeholder="placeholder" let-controlName="controlName"
-             let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+             let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass"
+             let-validationMessages="validationMessages"
+>
   <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
     <mat-label>{{title}}</mat-label>
     <textarea matInput [placeholder]="placeholder" [formControl]="formControlByName(controlName)" [required]="required"></textarea>
     <mat-hint>{{hint}}</mat-hint>
-    <mat-error *ngIf="formControlByName(controlName).getError('required')" class="mat-error"></mat-error>
+    <mat-error *ngFor="let validation of validationMessages">
+      <mat-error class="error-message" *ngIf="formControlByName(controlName).hasError(validation.type) && (formControlByName(controlName).dirty || formControlByName(controlName).touched)">
+        {{validation.message(formControlByName(controlName).getError(validation.type))}}
+      </mat-error>
+    </mat-error>
   </mat-form-field>
 </ng-template>
 <ng-template #password let-appearance="appearance" let-title="title" let-placeholder="placeholder" let-controlName="controlName"
-             let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+             let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass"
+             let-validationMessages="validationMessages"
+>
   <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
     <mat-label>{{title}}</mat-label>
     <input matInput [type]="hide ? 'password' : 'text'" [placeholder]="placeholder" [formControl]="formControlByName(controlName)" [required]="required">
@@ -28,22 +42,95 @@
       <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
     </button>
     <mat-hint>{{hint}}</mat-hint>
+    <mat-error *ngFor="let validation of validationMessages">
+      <mat-error class="error-message" *ngIf="formControlByName(controlName).hasError(validation.type) && (formControlByName(controlName).dirty || formControlByName(controlName).touched)">
+        {{validation.message(formControlByName(controlName).getError(validation.type))}}
+      </mat-error>
+    </mat-error>
   </mat-form-field>
 </ng-template>
 <ng-template #select let-appearance="appearance" let-title="title" let-placeholder="placeholder" let-controlName="controlName"
-             let-options="options" let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass">
+             let-options="options" let-hint="hint" let-required="required" let-matFormFieldClass="matFormFieldClass"
+             let-validationMessages="validationMessages" let-multiple="multiple"
+>
   <mat-form-field [appearance]="appearance" [class]="matFormFieldClass">
     <mat-label>{{title}}</mat-label>
-    <mat-select [required]="required">
+    <mat-select  *ngIf="multiple" [required]="required" [formControl]="formControlByName(controlName)" multiple>
+      <mat-option *ngFor="let option of options" value="{{option.value}}">{{option.name}}</mat-option>
+    </mat-select>
+    <mat-select  *ngIf="!multiple" [required]="required" [formControl]="formControlByName(controlName)">
       <mat-option *ngFor="let option of options" value="{{option.value}}">{{option.name}}</mat-option>
     </mat-select>
     <mat-hint>{{hint}}</mat-hint>
+    <mat-error *ngFor="let validation of validationMessages">
+      <mat-error class="error-message" *ngIf="formControlByName(controlName).hasError(validation.type) && (formControlByName(controlName).dirty || formControlByName(controlName).touched)">
+        {{validation.message(formControlByName(controlName).getError(validation.type))}}
+      </mat-error>
+    </mat-error>
   </mat-form-field>
 </ng-template>
-<ng-template #group let-formControls="formControls" let-formConfigs="formConfigs" let-formGroup="formGroup">
+<ng-template #radiobutton let-title="title" let-controlName="controlName"
+             let-required="required" let-matFormFieldClass="matFormFieldClass"
+             let-options="options" let-hint="hint" let-validationMessages="validationMessages"
+>
+  <section [class]="matFormFieldClass" style="display: block;">
+    <span class="mat-form-field-label-wrapper" style="position: relative;">
+      <label class="mat-form-field-label mat-empty mat-form-field-empty ng-star-inserted" style="position: relative; display: block">
+        <mat-label class="ng-star-inserted">{{title}}</mat-label>
+        <span *ngIf="required" aria-hidden="true" class="mat-placeholder-required mat-form-field-required-marker ng-star-inserted"> *</span>
+      </label>
+    </span>
+    <div style="margin-top: 15px;">
+      <mat-radio-group aria-label="title" [formControl]="formControlByName(controlName)">
+        <mat-radio-button *ngFor="let option of options" [value]="option.value" style="margin-left: 15px;">{{option.name}}</mat-radio-button>
+      </mat-radio-group>
+    </div>
+    <div class="mat-form-field-hint-wrapper ng-star-inserted" style="margin-top: 15px; opacity: 1; transform: translateY(0%);">
+      <mat-hint class="mat-hint mat-form-field-subscript-wrapper" >{{hint}}</mat-hint>
+      <div class="mat-form-field-hint-spacer"></div>
+    </div>
+    <mat-error *ngFor="let validation of validationMessages">
+      <mat-error class="error-message" *ngIf="formControlByName(controlName).hasError(validation.type) && (formControlByName(controlName).dirty || formControlByName(controlName).touched)">
+        {{validation.message(formControlByName(controlName).getError(validation.type))}}
+      </mat-error>
+    </mat-error>
+  </section>
+</ng-template>
+<ng-template #group let-formConfigs="formConfigs" let-formGroup="formGroup">
   <div [formGroup]="formGroup">
-    <lib-form-fields [formConfiguration]="formConfigs" [formControlCollections]="formControls"></lib-form-fields>
+    <lib-form-fields [formConfiguration]="formConfigs" [formGroup]="formGroup"></lib-form-fields>
   </div>
+</ng-template>
+<ng-template #checkbox let-appearance="appearance" let-title="title" let-controlName="controlName"
+             let-matFormFieldClass="matFormFieldClass" let-required="required"
+             let-options="options" let-hint="hint" let-validationMessages="validationMessages"
+>
+  <section [class]="matFormFieldClass" [formGroup]="formControlByName(controlName)">
+    <span class="mat-form-field-label-wrapper" style="position: relative">
+      <label class="mat-form-field-label mat-empty mat-form-field-empty ng-star-inserted" style="position: relative">
+        <mat-label class="ng-star-inserted">{{title}}</mat-label>
+        <span *ngIf="required" aria-hidden="true" class="mat-placeholder-required mat-form-field-required-marker ng-star-inserted"> *</span>
+      </label>
+    </span>
+    <span [class]="">
+      <ul>
+        <li *ngFor="let option of options; let i=index">
+          <mat-checkbox [formControlName]="i" >
+            {{option}}
+          </mat-checkbox>
+        </li>
+      </ul>
+    </span>
+    <div class="mat-form-field-hint-wrapper ng-star-inserted" style="opacity: 1; transform: translateY(0%);">
+      <mat-hint class="mat-hint mat-form-field-subscript-wrapper" >{{hint}}</mat-hint>
+      <div class="mat-form-field-hint-spacer"></div>
+    </div>
+    <mat-error *ngFor="let validation of validationMessages">
+      <mat-error class="error-message" *ngIf="formControlByName(controlName).hasError(validation.type) && (formControlByName(controlName).dirty || formControlByName(controlName).touched)">
+        {{validation.message(formControlByName(controlName).getError(validation.type))}}
+      </mat-error>
+    </mat-error>
+  </section>
 </ng-template>
 <ng-container *ngFor="let item of formConfiguration">
   <ng-container *ngIf="item.kindOfField === enumKindOfField.input && item.type === enumInputType.password">
@@ -58,8 +145,14 @@
   <ng-container *ngIf="item.kindOfField === enumKindOfField.textarea">
     <ng-template [ngTemplateOutlet]="textarea" [ngTemplateOutletContext]="item"></ng-template>
   </ng-container>
+  <ng-container *ngIf="item.kindOfField === enumKindOfField.checkbox">
+    <ng-template [ngTemplateOutlet]="checkbox" [ngTemplateOutletContext]="item"></ng-template>
+  </ng-container>
+  <ng-container *ngIf="item.kindOfField === enumKindOfField.radiobutton">
+    <ng-template [ngTemplateOutlet]="radiobutton" [ngTemplateOutletContext]="item"></ng-template>
+  </ng-container>
   <ng-container *ngIf="item.kindOfField === enumKindOfField.group">
     <ng-template [ngTemplateOutlet]="group"
-                 [ngTemplateOutletContext]="{formConfigs: item.group, formControls: childControlCollectionByName(item.controlName), formGroup: formControlByName(item.controlName)}"></ng-template>
+                 [ngTemplateOutletContext]="{formConfigs: item.group, formGroup: formControlByName(item.controlName)}"></ng-template>
   </ng-container>
 </ng-container>

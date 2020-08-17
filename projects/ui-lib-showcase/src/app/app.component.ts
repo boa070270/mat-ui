@@ -1,6 +1,6 @@
-import {Component} from '@angular/core';
-import {BuilderFieldControlConfiguration, EnumInputType, FormConfiguration} from 'ui-lib';
-import {Validators} from '@angular/forms';
+import {Component, ViewChild} from '@angular/core';
+import {BuilderFieldControlConfiguration, CommonFieldConfig, convertToInternal, EnumInputType, FormConfiguration} from 'ui-lib';
+import {FormGroup, Validators} from '@angular/forms';
 
 @Component({
   selector: 'app-root',
@@ -8,7 +8,7 @@ import {Validators} from '@angular/forms';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  formConfiguration: FormConfiguration = {
+  formDescription: FormConfiguration = {
     controls: [
       {
         formControl: BuilderFieldControlConfiguration.inputFieldConfiguration(EnumInputType.text),
@@ -20,6 +20,7 @@ export class AppComponent {
         prefix: '+380',
         required: true,
         matFormFieldClass: 'field-class',
+        immutable: true,
         group: [],
       },
       {
@@ -43,11 +44,33 @@ export class AppComponent {
         group: [],
       },
       {
-        formControl: BuilderFieldControlConfiguration.selectFieldConfiguration([{name: 'Option 1', value: 'op1'}, {name: 'Option 2', value: 'op2'}], '', Validators.required),
+        formControl: BuilderFieldControlConfiguration.selectFieldConfiguration([{name: 'Option 1', value: 'op1'}, {name: 'Option 2', value: 'op2'}], '', false, Validators.required),
         controlName: 'select1',
         hint: 'Please, select',
         title: 'Select 1',
         placeholder: 'There is place for select',
+        required: true,
+        matFormFieldClass: 'field-class',
+        group: [],
+      },
+      {
+        // tslint:disable-next-line:max-line-length
+        formControl: BuilderFieldControlConfiguration.checkboxFieldConfiguration(['Option 1', 'Option 2'], [false, true], Validators.required),
+        controlName: 'checkbox',
+        hint: 'Please, check box',
+        title: 'Checkbox 1',
+        placeholder: 'There is place for check the box',
+        required: true,
+        matFormFieldClass: 'field-class',
+        group: [],
+      },
+      {
+        // tslint:disable-next-line:max-line-length
+        formControl: BuilderFieldControlConfiguration.radiobuttonFieldConfiguration([{name: 'Option 1', value: 'op1'}, {name: 'Option 2', value: 'op2'}], '', Validators.required),
+        controlName: 'radiobutton',
+        hint: 'Please, select radio',
+        title: 'Radiobutton 1',
+        placeholder: 'There is place for radiobutton',
         required: true,
         matFormFieldClass: 'field-class',
         group: [],
@@ -61,4 +84,18 @@ export class AppComponent {
       formClass: 'form-class'
     }
   };
+  formConfiguration: Array<CommonFieldConfig>;
+  formGroup: FormGroup;
+  constructor() {
+    const {formConfiguration, formGroup} = convertToInternal(this.formDescription);
+    this.formConfiguration = formConfiguration;
+    this.formGroup = formGroup;
+  }
+  showPlace: string;
+
+  showForm(): void {
+    const value = this.formGroup.value;
+    console.log(value);
+    this.showPlace = JSON.stringify(value);
+  }
 }

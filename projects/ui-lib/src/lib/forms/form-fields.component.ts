@@ -1,17 +1,18 @@
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import {CommonFieldConfig, EnumInputType, EnumKindOfField, FormControlCollections, FormGroupOrControl} from './form-configuration';
-import {FormControl, FormGroup} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import {CommonFieldConfig, EnumInputType, EnumKindOfField} from './form-configuration';
+import {AbstractControl, FormGroup} from '@angular/forms';
 
 @Component({
   selector: 'lib-form-fields',
   templateUrl: './form-fields.component.html',
-  styleUrls: ['./form-fields.component.css']
+  styleUrls: ['./form-fields.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FormFieldsComponent implements OnInit, OnChanges {
   hide = true;
   enumKindOfField = EnumKindOfField;
   enumInputType = EnumInputType;
-  @Input() formControlCollections: FormControlCollections;
+  @Input() formGroup: FormGroup;
   @Input() formConfiguration: Array<CommonFieldConfig>;
 
   constructor() {
@@ -25,21 +26,14 @@ export class FormFieldsComponent implements OnInit, OnChanges {
     this.checkRequired();
   }
   checkRequired(): void {
-    if (!this.formControlCollections) {
-      throw new TypeError('formControlCollections is required');
+    if ( !this.formGroup) {
+      throw new TypeError('formConfiguration is required');
     }
     if (!this.formConfiguration) {
       throw new TypeError('formConfiguration is required');
     }
   }
-  formControlByName(controlName: string): FormControl | FormGroup {
-    if (this.formControlCollections && this.formControlCollections[controlName]) {
-      return this.formControlCollections[controlName].control;
-    }
-  }
-  childControlCollectionByName(controlName: string): FormControlCollections {
-    if (this.formControlCollections && this.formControlCollections[controlName]) {
-      return this.formControlCollections[controlName].children;
-    }
+  formControlByName(controlName: string): AbstractControl {
+    return this.formGroup.get(controlName);
   }
 }
