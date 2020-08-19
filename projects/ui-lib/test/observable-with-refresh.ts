@@ -8,7 +8,7 @@ class TestObservableWithRefresh extends ObservableWithRefresh<number> {
   }
 }
 
-const observable = new TestObservableWithRefresh();
+const observable = new TestObservableWithRefresh(generate(0, x => x < 10, x => x + 1));
 
 observable.subscribe(next => { console.log('A', next); } );
 observable.subscribe(next => { console.log('B', next); } );

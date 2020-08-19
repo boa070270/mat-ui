@@ -39,7 +39,6 @@ export class DynamicFormComponent<T> implements OnInit, OnChanges {
     }
   }
   setData(data: any): void {
-
   }
 }
 

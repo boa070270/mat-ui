@@ -1,6 +1,17 @@
 import {AbstractControl, AbstractControlOptions, AsyncValidatorFn, FormArray, FormControl, FormGroup, ValidatorFn} from '@angular/forms';
 import {FunctionExpr} from '@angular/compiler';
-import {UIFormControl} from './uiform-control';
+import {EventEmitter} from '@angular/core';
+import {Subject, Subscription} from 'rxjs';
+import {hasOwnProperty} from 'tslint/lib/utils';
+import {valueReferenceToExpression} from '@angular/compiler-cli/src/ngtsc/annotations/src/util';
+
+export interface ChangeViewModel {
+  hide: Array<string>;
+  show: Array<string>;
+  disable: Array<string>;
+  enable: Array<string>;
+}
+export type ViewModelManage = (value: any) => ChangeViewModel;
 
 export interface AnyKeyString {
   [key: string]: string;
@@ -16,7 +27,6 @@ export interface CommonFieldConfig {
   title: string;
   kindOfField: EnumKindOfField;
   controlName: string;
-  // control: Abstr
   type?: EnumInputType;
   placeholder?: string;
   iconName?: string;
@@ -64,7 +74,8 @@ export interface FormFieldConfiguration {
   errorMessages?: AnyKeyString;
   // tslint:disable-next-line:max-line-length
   formControl: AbstractControlConfiguration;
-  group: Array<FormFieldConfiguration>;
+  group?: Array<FormFieldConfiguration>; // TODO Is this field need?
+  viewModelManage?: ViewModelManage;
 }
 export interface GroupControlConfiguration extends AbstractControlConfiguration {
   kindOf: EnumKindOfField.group;
@@ -135,17 +146,26 @@ export class BuilderFieldControlConfiguration {
   }
 }
 export type FunctionMap = (r: any) => any;
+export interface ViewModelManager {
+  registerViewModelManage(fn: ViewModelManage): void;
+}
 export interface FormOptions {
   converterToForm?: FunctionMap;
   converterFromForm?: FunctionMap;
   readonly: boolean;
   formClass?: string | string[];
-  appearance?: string;
+  appearance?: 'legacy' | 'standard' | 'fill' | 'outline';
+  viewModelManage?: ViewModelManage;
 }
 export interface FormConfiguration {
   controls: Array<FormFieldConfiguration>;
   options: FormOptions;
 }
+export interface FormDialogConfiguration {
+  configuration: FormConfiguration;
+  data: any;
+}
+
 export interface FormGroupOrControl {
   children: FormControlCollections;
   control: AbstractControl;
@@ -230,7 +250,7 @@ export function convertToInternal(configuration: FormConfiguration): ResultOfCon
               children.push(new FormControl(defaultValue));
             }
             fld.options = chkCfg.options;
-            control = new FormArray(children, chkCfg.validatorOrOpts, chkCfg.asyncValidator);
+            control = new UIFormArray(children, chkCfg.validatorOrOpts, chkCfg.asyncValidator);
             break;
           case EnumKindOfField.radiobutton:
             const radioCfg = (cfg.formControl as RadiobuttonFieldConfiguration);
@@ -242,6 +262,9 @@ export function convertToInternal(configuration: FormConfiguration): ResultOfCon
         if (cfg.immutable && typeof (control as UIFormControl).setImmutable === 'function') {
           (control as UIFormControl).setImmutable(true);
         }
+        if (cfg.viewModelManage) {
+          (control as any).registerViewModelManage(cfg.viewModelManage);
+        }
         result.formControlCollections[controlName] = {
           control,
           children: null
@@ -250,26 +273,187 @@ export function convertToInternal(configuration: FormConfiguration): ResultOfCon
         const {formConfiguration, formControlCollections, defaultValue} = this.prepare(cfg.group);
         fld.group = formConfiguration;
         result.formControlCollections[controlName] = {
-          control: this.buildFormGroup(formControlCollections),
+          control: this.buildFormGroup(formControlCollections, cfg),
           children: formControlCollections
         };
       }
     }
     return result;
   }
-  function buildFormGroup(formControlCollections: FormControlCollections): FormGroup {
+  function buildFormGroup(formControlCollections: FormControlCollections, cfg?: FormFieldConfiguration): UIFormGroup {
     const controls = {};
     for (const key in formControlCollections) {
       if (formControlCollections.hasOwnProperty(key)) {
         controls[key] = formControlCollections[key].control;
       }
     }
-    return new FormGroup(controls);
+    const control = new UIFormGroup(controls);
+    if (cfg && cfg.viewModelManage) {
+      control.registerViewModelManage(cfg.viewModelManage);
+    }
+    return control;
   }
 
   const resultPrepare = prepare(configuration.controls);
+  const formGroup = buildFormGroup(resultPrepare.formControlCollections);
+  if (configuration.options && configuration.options.viewModelManage) {
+    formGroup.registerViewModelManage(configuration.options.viewModelManage);
+  }
   return {
     formConfiguration: resultPrepare.formConfiguration,
-    formGroup: buildFormGroup(resultPrepare.formControlCollections)
+    formGroup
   };
+}
+function isBoxedValue(formState: any): boolean {
+  return typeof formState === 'object' && formState !== null &&
+    Object.keys(formState).length === 2 && 'value' in formState && 'disabled' in formState;
+}
+function isEmpty(value: any): boolean {
+  return value === undefined || value === null || isNaN(value) || (typeof value === 'string' && value.length === 0);
+}
+export function manageViewModel(controls: any, changeViewModel: ChangeViewModel): void {
+  if (typeof controls === 'object') {
+    for (const ctrlName of changeViewModel.disable) {
+      if (controls[ctrlName]) {
+        controls[ctrlName].disable({onlySelf: true, emitEvent: false});
+      }
+    }
+    for (const ctrlName of changeViewModel.enable) {
+      if (controls[ctrlName]) {
+        controls[ctrlName].enable({onlySelf: true, emitEvent: false});
+      }
+    }
+  }
+}
+export class UIFormControl extends FormControl implements ViewModelManager {
+  immutable = false;
+  defaultValue: any;
+  viewModelManage: ViewModelManage;
+
+  constructor(
+    formState: any = null,
+    validatorOrOpts?: ValidatorFn|ValidatorFn[]|AbstractControlOptions|null,
+    asyncValidator?: AsyncValidatorFn|AsyncValidatorFn[]|null) {
+    super(formState, validatorOrOpts, asyncValidator);
+    this.defaultValue = formState;
+    if (isBoxedValue(formState)) {
+      this.defaultValue = formState.value;
+    }
+  }
+  registerViewModelManage(fn: ViewModelManage): void {
+    this.viewModelManage = fn;
+  }
+  setImmutable(v: boolean): void {
+    this.immutable = v;
+  }
+  // tslint:disable-next-line:max-line-length
+  setValue(value: any, options?: { onlySelf?: boolean; emitEvent?: boolean; emitModelToViewChange?: boolean; emitViewToModelChange?: boolean }): void {
+    super.setValue(value, options);
+    this.applyImmutable(value);
+    if (this.viewModelManage) {
+      const result = this.viewModelManage(value);
+      if (result) {
+        manageViewModel(this.parent.controls, result);
+        (this.parent as UIFormGroup).viewModelManageEmitter.emit(result);
+      }
+    }
+  }
+  private equalToDefault(v: any): boolean {
+    if (isBoxedValue(v)) {
+      return v.value === this.defaultValue;
+    }
+    return v === this.defaultValue;
+  }
+  private applyImmutable(value): void {
+    if (this.immutable && this.enabled) {
+      if (!this.dirty && !isEmpty(value) && !this.equalToDefault(value)) {
+        this.disable({emitEvent: false, onlySelf: true});
+      }
+    }
+  }
+  enable(opts?: { onlySelf?: boolean; emitEvent?: boolean }): void {
+    if (!this.immutable || this.dirty || isEmpty(this.value) || this.equalToDefault(this.value)) {
+      super.enable(opts);
+    }
+  }
+
+}
+export class UIFormArray extends FormArray implements ViewModelManager {
+  viewModelManage: ViewModelManage;
+
+  registerViewModelManage(fn: ViewModelManage): void {
+    this.viewModelManage = fn;
+  }
+  setValue(value: any[], options?: {
+    onlySelf?: boolean;
+    emitEvent?: boolean;
+  }): void {
+    super.setValue(value, options);
+    if (this.viewModelManage) {
+      const result = this.viewModelManage(value);
+      if (result) {
+        manageViewModel(this.parent.controls, result);
+        (this.parent as UIFormGroup).viewModelManageEmitter.emit(result);
+      }
+    }
+  }
+  setImmutable(v: boolean): void {
+    const {controls} = this;
+    if (controls && controls.length > 0) {
+      for (const control of controls) {
+        if ((control as any).setImmutable) {
+          (control as any).setImmutable(v);
+        }
+      }
+    }
+  }
+}
+export class UIEventEmitter<T> extends Subject<T> {
+  value: T;
+  emit(value?: T): void {
+    const { observers } = this;
+    if ( observers.length > 0 ) {
+      super.next(value);
+    } else {
+      this.value = value;
+    }
+  }
+  subscribe(next?: any, error?: any, complete?: any): Subscription {
+    const fn = (v: any) => { next(v); };
+    const sink = super.subscribe(fn);
+    const value = this.value;
+    if ( value !== undefined ) {
+      this.value = undefined;
+      this.emit(value);
+    }
+    return sink;
+  }
+}
+export class UIFormGroup extends FormGroup implements ViewModelManager {
+  viewModelManage: ViewModelManage;
+  viewModelManageEmitter: UIEventEmitter<ChangeViewModel> = new UIEventEmitter<ChangeViewModel>();
+
+  registerViewModelManage(fn: ViewModelManage): void {
+    this.viewModelManage = fn;
+  }
+  setValue(value: { [p: string]: any }, options?: { onlySelf?: boolean; emitEvent?: boolean }): void {
+    super.setValue(value, options);
+    if (this.viewModelManage) {
+      const result = this.viewModelManage(value);
+      if (result) {
+        manageViewModel(this.controls, result);
+        this.viewModelManageEmitter.emit(result);
+      }
+    }
+  }
+  setImmutable(v: boolean): void {
+    const {controls} = this;
+    if (controls) {
+      for (const ctrlName in controls) {
+        if ( this.hasOwnProperty(ctrlName) && (controls[ctrlName] as any).setImmutable) {
+          (controls[ctrlName] as any).setImmutable(v);
+        }
+      }
+    }
+  }
 }

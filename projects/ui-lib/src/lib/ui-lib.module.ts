@@ -19,6 +19,7 @@ import { ShowMediaValueComponent } from './show-media-value.component';
 import { ShowValueComponent } from './show-value.component';
 import { EditTableComponent } from './edit-table.component';
 import { MatSelectModule } from '@angular/material/select';
+import {MatListModule} from '@angular/material/list';
 
 @NgModule({
   declarations: [
@@ -29,21 +30,22 @@ import { MatSelectModule } from '@angular/material/select';
     ShowMediaValueComponent, ShowValueComponent,
     EditTableComponent,
   ],
-    imports: [
-        DragDropModule,
-        CommonModule,
-        MatDialogModule,
-        MatButtonModule,
-        MatMenuModule,
-        MatIconModule,
-        MatTableModule,
-        MatCheckboxModule,
-        MatPaginatorModule,
-        MatSortModule,
-        MatInputModule,
-        ReactiveFormsModule,
-        MatSelectModule
-    ],
+  imports: [
+    DragDropModule,
+    CommonModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatMenuModule,
+    MatIconModule,
+    MatTableModule,
+    MatCheckboxModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    MatListModule
+  ],
   exports: [
     UiLibComponent,
     ColumnEditorComponent,

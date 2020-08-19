@@ -1,8 +1,7 @@
 <p>app-component</p>
-<form [formGroup]="formGroup">
-  <lib-form-fields [formGroup]="formGroup" [formConfiguration]="formConfiguration"></lib-form-fields>
-</form>
-<div></div>
-<button (click)="showForm()">Show Value</button>
-<div></div>
-<span>{{showPlace}}</span>
+<nav>
+  <a routerLink="/form-fields" style="margin-left: 30px;">Form fields</a>
+  <a routerLink="/table" style="margin-left: 30px;">Table</a>
+  <a routerLink="/dialog" style="margin-left: 30px;">Dialogs</a>
+</nav>
+<router-outlet></router-outlet>

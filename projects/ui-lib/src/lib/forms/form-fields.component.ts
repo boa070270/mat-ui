@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import {CommonFieldConfig, EnumInputType, EnumKindOfField} from './form-configuration';
+import {ChangeViewModel, CommonFieldConfig, EnumInputType, EnumKindOfField, UIFormGroup} from './form-configuration';
 import {AbstractControl, FormGroup} from '@angular/forms';
 
 @Component({
@@ -12,7 +12,11 @@ export class FormFieldsComponent implements OnInit, OnChanges {
   hide = true;
   enumKindOfField = EnumKindOfField;
   enumInputType = EnumInputType;
-  @Input() formGroup: FormGroup;
+  controls: {
+    [key: string]: AbstractControl;
+  };
+  controlsView: any = {};
+  @Input() formGroup: UIFormGroup;
   @Input() formConfiguration: Array<CommonFieldConfig>;
 
   constructor() {
@@ -24,6 +28,20 @@ export class FormFieldsComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.checkRequired();
+    this.controls = this.formGroup.controls;
+    console.log('FormFieldsComponent.ngOnInit');
+    this.formGroup.viewModelManageEmitter.subscribe((change: ChangeViewModel) => {
+      if (change.hide && change.hide.length > 0) {
+        const controls = Object.assign({}, this.controlsView);
+        for (const ctrlName of change.hide) {
+          controls[ctrlName] = true;
+        }
+        for (const ctrlName of change.show) {
+          delete controls[ctrlName];
+        }
+        this.controlsView = controls;
+      }
+    });
   }
   checkRequired(): void {
     if ( !this.formGroup) {

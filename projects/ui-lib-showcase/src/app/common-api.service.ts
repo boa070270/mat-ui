@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import {Observable} from 'rxjs';
 import {fromPromise} from 'rxjs/internal-compatibility';
 import {FormGroup, ValidationErrors, ValidatorFn} from '@angular/forms';
-import {IOptions} from 'tslint';
 
 export interface TestData {
   id: number;
@@ -23,7 +22,8 @@ export const testDataValidator: ValidatorFn = (control: FormGroup): ValidationEr
     }
   }
   return null;
-}
+};
+
 export interface DialogTestData<T> {
   row: T;
   readonly: boolean;

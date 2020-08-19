@@ -3,9 +3,18 @@ import {ComponentType} from '@angular/cdk/overlay';
 import {TemplateRef} from '@angular/core';
 import {Observable, Subscriber, TeardownLogic} from 'rxjs';
 import {ValidatorFn} from '@angular/forms';
+import {FormConfiguration} from './forms/form-configuration';
 
 export type FunctionGetId<T> = (v: T) => string;
 export type FunctionGetColumnValue<T> = (element: T, column: string) => string;
+
+export interface UIDataSource<T> {
+  select(filter?: any): Observable<T[]>;
+  delete(rows: T[]): Observable<any>;
+  insert(row: T): Observable<any>;
+  update(row: T): Observable<any>;
+  refresh(): void;
+}
 
 /**
  * Interface is used to configure EditTableComponent
@@ -20,37 +29,26 @@ export interface EditTableConfiguration<T> {
    */
   getColumnValue: FunctionGetColumnValue<T>;
   /**
-   * define dialog to view row
-   */
-  viewDialog: ComponentType<T> | TemplateRef<T>;
-  /**
-   * define dialog to edit row
-   */
-  editDialog: ComponentType<T> | TemplateRef<T>;
-  /**
-   * define dialog to make new row
-   */
-  newDialog: ComponentType<T> | TemplateRef<T>;
-  /**
-   * define users commands that will emit
-   */
-  extendCommands: ExtendCommands[];
-  /**
    * all columns
    */
   allColumns: ColumnEditInfo[];
-  /**
-   * Observable of data
-   */
-  data: Observable<T[]>;
   /**
    * provide selected rows to EditTableComponent. The Id must be equal to row Id
    */
   selectedRows: T[];
   /**
-   * delete rows
+   * you can describe form or use components viewDialog, editDialog, newDialog
    */
-  deleteRows(rows: T[]): void;
+  formConfiguration?: FormConfiguration;
+  /**
+   * define users commands that will emit
+   */
+  extendCommands: ExtendCommands[];
+  /**
+   * dataSource
+   */
+  dataSource: UIDataSource<T>;
+  newItem?: () => T;
 }
 export interface TableEvent {
   command: CommandEnum;
@@ -76,20 +74,17 @@ export interface ColumnEditInfo {
 }
 export const DefaultGetId: FunctionGetId<any> = (row) => row ? row.id : undefined;
 
-export interface Refreshable {
-  refresh(): void;
-}
-export abstract class ObservableWithRefresh<T> extends Observable<T> implements Refreshable {
-  subscribers: Subscriber<T>[] = [];
-  observable: Observable<T>;
+export class ObservableWithRefresh<T> extends Observable<T[]> {
+  subscribers: Subscriber<T[]>[] = [];
+  observable: Observable<T[]>;
   internalSubscriberID = Math.random().toString(36);
-  constructor(observable: Observable<T>) {
+  constructor(observable: Observable<T[]>) {
     super();
     this.observable = observable;
   }
-  internalSubscriber(): Subscriber<T> {
-    const subscriber = Subscriber.create<T>(
-      (x?: T) => {
+  internalSubscriber(): Subscriber<T[]> {
+    const subscriber = Subscriber.create<T[]>(
+      (x?: T[]) => {
         for (const subs of this.subscribers) {
           subs.next(x);
         }
@@ -107,19 +102,18 @@ export abstract class ObservableWithRefresh<T> extends Observable<T> implements 
     (subscriber as any).internalSubscriberID = this.internalSubscriberID;
     return subscriber;
   }
-  _subscribe(subscriber: Subscriber<T>): TeardownLogic {
+  _subscribe(subscriber: Subscriber<T[]>): TeardownLogic {
     if ((subscriber as any).internalSubscriberID !== this.internalSubscriberID) {
       this.subscribers.push(subscriber);
     }
     return this.observable && this.observable.subscribe(this.internalSubscriber());
   }
-  newSource(source: Observable<T>): void {
+  newSource(source: Observable<T[]>): void {
     this.observable = source;
     if (this.subscribers.length > 0){
       this.subscribe(this.internalSubscriber());
     }
   }
-  abstract refresh(): void;
 }
 
 export class Selector<T> {

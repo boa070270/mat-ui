@@ -6,6 +6,7 @@ export * from './lib/ui-lib.service';
 export * from './lib/ui-lib.component';
 export * from './lib/ui-lib.module';
 export * from './lib/forms/forms.module';
+export * from './lib/ui-types';
 export * from './lib/column-editor.component';
 export * from './lib/yes-no-dialog.component';
 export * from './lib/show-media-value.component';

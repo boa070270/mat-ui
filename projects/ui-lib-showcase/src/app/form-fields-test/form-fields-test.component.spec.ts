@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DataEditorComponent } from './data-editor.component';
+import { FormFieldsTestComponent } from './form-fields-test.component';
 
-describe('DataEditorComponent', () => {
-  let component: DataEditorComponent;
-  let fixture: ComponentFixture<DataEditorComponent>;
+describe('FormFieldsTestComponent', () => {
+  let component: FormFieldsTestComponent;
+  let fixture: ComponentFixture<FormFieldsTestComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DataEditorComponent ]
+      declarations: [ FormFieldsTestComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DataEditorComponent);
+    fixture = TestBed.createComponent(FormFieldsTestComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

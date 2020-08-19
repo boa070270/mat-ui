@@ -1,5 +1,5 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {MatDialog} from '@angular/material/dialog';
+import {Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild} from '@angular/core';
+import {MatDialog, MatDialogRef} from '@angular/material/dialog';
 import {
   ExtendCommands,
   EditTableConfiguration,
@@ -14,6 +14,9 @@ import {ColumnEditorComponent} from './column-editor.component';
 import {YesNoDialogComponent} from './yes-no-dialog.component';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
+import {ComponentType} from '@angular/cdk/overlay';
+import {DynamicFormDialogComponent} from './forms/dynamic-form-dialog.component';
+import {FormConfiguration} from './forms/form-configuration';
 
 @Component({
   selector: 'lib-edit-table',
@@ -22,7 +25,19 @@ import {MatSort} from '@angular/material/sort';
 })
 export class EditTableComponent<T> implements OnInit {
 
-  @Input() configuration!: EditTableConfiguration<T>;
+  @Input() configuration: EditTableConfiguration<T>;
+  /**
+   * define dialog to view row
+   */
+  @Input() viewDialog: ComponentType<T> | TemplateRef<T>;
+  /**
+   * define dialog to edit row
+   */
+  @Input() editDialog: ComponentType<T> | TemplateRef<T>;
+  /**
+   * define dialog to make new row
+   */
+  @Input() newDialog: ComponentType<T> | TemplateRef<T>;
   @Output() emitRows = new EventEmitter<TableEvent>();
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
@@ -34,10 +49,14 @@ export class EditTableComponent<T> implements OnInit {
   columns: ColumnEditInfo[];
   columnsWithSelect: string[];
   resultsLength = 0;
+  rowClickCount = 0;
 
   constructor(private dialog: MatDialog) { }
 
   ngOnInit(): void {
+    if (!this.configuration) {
+      throw new TypeError('configuration must be present');
+    }
     this.selection = new Selector(this.configuration.getId, this.configuration.selectedRows);
     this.selectionHighlighted = new Selector(this.configuration.getId);
     this.columnsWithSelect = ['#select'];
@@ -50,7 +69,7 @@ export class EditTableComponent<T> implements OnInit {
     this.extendCommands = this.configuration.extendCommands;
     this.getColumnValue = this.configuration.getColumnValue;
     this.dataSource = new MatTableDataSource<T>([]);
-    this.configuration.data.subscribe(data => {
+    this.configuration.dataSource.select().subscribe(data => {
       this.dataSource.data = data;
       this.resultsLength = data.length;
     });
@@ -75,6 +94,7 @@ export class EditTableComponent<T> implements OnInit {
     }
     return [];
   }
+
   delete(): void {
     const rows = this._selectRows(this.selection);
     if (rows.length > 0) {
@@ -86,7 +106,9 @@ export class EditTableComponent<T> implements OnInit {
       dialogRef.afterClosed().subscribe(result => {
         if (result) {
           this.selection.clear();
-          this.configuration.deleteRows(rows);
+          this.configuration.dataSource.delete(rows).subscribe(() => {
+            this.configuration.dataSource.refresh();
+          });
           this.emitRows.emit({
             command: CommandEnum.delete,
             rows
@@ -97,10 +119,7 @@ export class EditTableComponent<T> implements OnInit {
   }
 
   refresh(): void {
-    const refreshable = this.configuration.data;
-    if (refreshable instanceof ObservableWithRefresh) {
-      (refreshable as ObservableWithRefresh<T>).refresh();
-    }
+    this.configuration.dataSource.refresh();
     this.emitRows.emit({
       command: CommandEnum.refresh,
       rows: []
@@ -121,6 +140,7 @@ export class EditTableComponent<T> implements OnInit {
           if (c.displayed) {
             this.columnsWithSelect.push(c.columnId);
           }
+          return c.displayed;
         });
       }
     });
@@ -136,12 +156,69 @@ export class EditTableComponent<T> implements OnInit {
   }
 
   rowClick(row: any): void {
-    this.selectionHighlighted.clear();
-    this.selectionHighlighted.select(row);
-    this.emitRows.emit({
-      command: CommandEnum.update,
-      rows: [row]
-    });
+    this.rowClickCount++;
+    setTimeout(() => {
+      this.selectionHighlighted.clear();
+      this.selectionHighlighted.select(row);
+      if (this.rowClickCount === 1) {
+        this.emitRows.emit({
+          command: CommandEnum.update,
+          rows: [row]
+        });
+      } else if (this.rowClickCount === 2) {
+        const refDialog = this.openViewDialog();
+      }
+      this.rowClickCount = 0;
+    }, 250);
+  }
+  _openDialog(dialog: ComponentType<T> | TemplateRef<T>, data: any, readonly: boolean = false): MatDialogRef<any> {
+    if (dialog) {
+      return this.dialog.open(dialog, {data});
+    } else if (this.configuration.formConfiguration) {
+      this.configuration.formConfiguration.options.readonly = readonly;
+      return this.dialog.open(DynamicFormDialogComponent, {
+        data: {
+          configuration: this.configuration.formConfiguration,
+          data
+        }
+      });
+    }
+  }
+  _selectedRow(): T {
+    const rows = this._selectRows(this.selectionHighlighted);
+    return rows[0];
+  }
+  openViewDialog(): MatDialogRef<any> {
+    if (this.selectionHighlighted.hasValue()) {
+      return this._openDialog(this.viewDialog, this._selectedRow(), true);
+    }
+  }
+  openEditDialog(): MatDialogRef<any> {
+    if (this.selectionHighlighted.hasValue()) {
+      return this._openDialog(this.editDialog, this._selectedRow(), true);
+    }
+  }
+  openNewDialog(): MatDialogRef<any> {
+    return this._openDialog(this.newDialog, this.configuration.newItem(), true);
   }
 
+  add(): void {
+    const dialog = this.openNewDialog();
+    if (dialog) {
+      dialog.afterClosed().subscribe(data => {
+        this.configuration.dataSource.insert(data).subscribe(() => this.configuration.dataSource.refresh());
+      });
+    }
+  }
+
+  edit(): void {
+    const dialog = this.openEditDialog();
+    if (dialog) {
+      dialog.afterClosed().subscribe(data => {
+        if (data) {
+          this.configuration.dataSource.update(data).subscribe(() => this.configuration.dataSource.refresh());
+        }
+      });
+    }
+  }
 }

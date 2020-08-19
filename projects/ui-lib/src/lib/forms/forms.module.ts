@@ -8,13 +8,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { FormFieldsComponent } from './form-fields.component';
 import { DynamicFormComponent } from './dynamic-form.component';
+import { DynamicFormDialogComponent } from './dynamic-form-dialog.component';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatRadioModule} from '@angular/material/radio';
 
 @NgModule({
   declarations: [
     DynamicFormComponent,
-    FormFieldsComponent
+    FormFieldsComponent,
+    DynamicFormDialogComponent
   ],
     imports: [
         CommonModule,
@@ -29,7 +31,8 @@ import {MatRadioModule} from '@angular/material/radio';
     ],
   exports: [
     DynamicFormComponent,
-    FormFieldsComponent
+    FormFieldsComponent,
+    DynamicFormDialogComponent
   ],
 })
 export class FormsModule { }
