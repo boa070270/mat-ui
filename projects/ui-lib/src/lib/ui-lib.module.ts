@@ -20,6 +20,7 @@ import { ShowValueComponent } from './show-value.component';
 import { EditTableComponent } from './edit-table.component';
 import { MatSelectModule } from '@angular/material/select';
 import {MatListModule} from '@angular/material/list';
+import { CarouselComponent } from './carousel.component';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import {MatListModule} from '@angular/material/list';
     ShowMediaDialogComponent,
     ShowMediaValueComponent, ShowValueComponent,
     EditTableComponent,
+    CarouselComponent,
   ],
   imports: [
     DragDropModule,
@@ -54,6 +56,7 @@ import {MatListModule} from '@angular/material/list';
     ShowMediaValueComponent,
     ShowValueComponent,
     EditTableComponent,
+    CarouselComponent,
   ]
 })
 export class UiLibModule { }

@@ -150,6 +150,9 @@ export interface ViewModelManager {
   registerViewModelManage(fn: ViewModelManage): void;
 }
 export interface FormOptions {
+    /**
+     *
+     */
   converterToForm?: FunctionMap;
   converterFromForm?: FunctionMap;
   readonly: boolean;

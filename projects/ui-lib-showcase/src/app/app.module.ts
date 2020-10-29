@@ -8,6 +8,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { FormFieldsTestComponent } from './form-fields-test/form-fields-test.component';
 import { TableTestComponent } from './table-test/table-test.component';
 import { DialogTestComponent } from './dialog-test/dialog-test.component';
+import { CarouselTestComponent } from './carousel-test/carousel-test.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { DialogTestComponent } from './dialog-test/dialog-test.component';
     FormFieldsTestComponent,
     TableTestComponent,
     DialogTestComponent,
+    CarouselTestComponent,
   ],
     imports: [
         BrowserModule,

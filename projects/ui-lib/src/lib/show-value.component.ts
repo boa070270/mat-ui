@@ -1,6 +1,7 @@
 import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
 import {ShowMediaDialogComponent} from './show-media-dialog.component';
 import {MatDialog} from '@angular/material/dialog';
+import {ShowMediaType} from './ui-types';
 
 @Component({
   selector: 'lib-show-value',
@@ -9,7 +10,7 @@ import {MatDialog} from '@angular/material/dialog';
 })
 export class ShowValueComponent implements OnInit {
 
-  @Input() row: any;
+  @Input() row: ShowMediaType;
   @Input() value: string;
   @Input() imgStyle = 'width: 48px; height: 48px;';
   @ViewChild('videoElement') videoElement: ElementRef<HTMLVideoElement>;
@@ -24,7 +25,7 @@ export class ShowValueComponent implements OnInit {
   ngOnInit(): void {
     if (this.row && this.row.mediaType && this.row.mediaType.indexOf('/') > 0){
       this.type = this.row.mediaType.substr(0, this.row.mediaType.indexOf('/'));
-      this.mediaURI = '/api/v1/assets/' + this.row.mediaId;
+      this.mediaURI = this.row.mediaURI;
       this.mediaType = this.row.mediaType;
       console.log('ShowValueComponent', this.type, this.imgStyle, this.mediaURI, this.mediaType);
     }

@@ -7,7 +7,7 @@ import {
   CommandEnum,
   TableEvent,
   Selector,
-  FunctionGetColumnValue, ObservableWithRefresh
+  FunctionGetColumnValue, ObservableWithRefresh, FunctionGetColumnMedia
 } from './ui-types';
 import {MatTableDataSource} from '@angular/material/table';
 import {ColumnEditorComponent} from './column-editor.component';
@@ -38,11 +38,13 @@ export class EditTableComponent<T> implements OnInit {
    * define dialog to make new row
    */
   @Input() newDialog: ComponentType<T> | TemplateRef<T>;
+  @Input() text: string;
   @Output() emitRows = new EventEmitter<TableEvent>();
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
   extendCommands: ExtendCommands[];
   getColumnValue: FunctionGetColumnValue<T>;
+  getColumnMedia: FunctionGetColumnMedia<T>;
   selection: Selector<T>;
   dataSource: MatTableDataSource<T>;
   selectionHighlighted: Selector<T>;
@@ -50,6 +52,9 @@ export class EditTableComponent<T> implements OnInit {
   columnsWithSelect: string[];
   resultsLength = 0;
   rowClickCount = 0;
+  canAdd = true;
+  canDelete = true;
+  canEdit = true;
 
   constructor(private dialog: MatDialog) { }
 
@@ -66,8 +71,9 @@ export class EditTableComponent<T> implements OnInit {
         return true;
       }
     });
-    this.extendCommands = this.configuration.extendCommands;
+    this.extendCommands = this.configuration.extendCommands || [];
     this.getColumnValue = this.configuration.getColumnValue;
+    this.getColumnMedia = this.configuration.getColumnMedia;
     this.dataSource = new MatTableDataSource<T>([]);
     this.configuration.dataSource.select().subscribe(data => {
       this.dataSource.data = data;
@@ -75,6 +81,30 @@ export class EditTableComponent<T> implements OnInit {
     });
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+    if (this.configuration.readonly) {
+        this.canAdd = false;
+        this.canDelete = false;
+        this.canEdit = false;
+    } else if ( !this.configuration.formConfiguration ) {
+        if (!this.viewDialog) {
+            this.view = () => {};
+        }
+        if (!this.editDialog) {
+            this.canEdit = false;
+        }
+        if (!this.newDialog) {
+            this.canAdd = false;
+        }
+    }
+    if (!this.canDelete) {
+        this.delete = () => {};
+    }
+    if (!this.canEdit) {
+        this.edit = () => {};
+    }
+    if (!this.canAdd) {
+        this.add = () => {};
+    }
   }
 
   applyDataFilter(event: Event): void {
@@ -101,7 +131,7 @@ export class EditTableComponent<T> implements OnInit {
       const msg = rows.length > 1 ? rows.length + ' rows' : 'this row';
       const dialogRef = this.dialog.open(YesNoDialogComponent, {
         // width: '400px',
-        data: 'Do you really want do delete ' + msg
+        data: {msg: 'Do you really want do delete ' + msg}
       });
       dialogRef.afterClosed().subscribe(result => {
         if (result) {
@@ -166,7 +196,7 @@ export class EditTableComponent<T> implements OnInit {
           rows: [row]
         });
       } else if (this.rowClickCount === 2) {
-        const refDialog = this.openViewDialog();
+        this.view();
       }
       this.rowClickCount = 0;
     }, 250);
@@ -185,8 +215,9 @@ export class EditTableComponent<T> implements OnInit {
     }
   }
   _selectedRow(): T {
+    const newItem = this.configuration.newItem ? this.configuration.newItem() : {};
     const rows = this._selectRows(this.selectionHighlighted);
-    return rows[0];
+    return Object.assign(newItem, rows[0]);
   }
   openViewDialog(): MatDialogRef<any> {
     if (this.selectionHighlighted.hasValue()) {
@@ -195,18 +226,25 @@ export class EditTableComponent<T> implements OnInit {
   }
   openEditDialog(): MatDialogRef<any> {
     if (this.selectionHighlighted.hasValue()) {
-      return this._openDialog(this.editDialog, this._selectedRow(), true);
+      return this._openDialog(this.editDialog, this._selectedRow(), false);
     }
   }
   openNewDialog(): MatDialogRef<any> {
-    return this._openDialog(this.newDialog, this.configuration.newItem(), true);
+    return this._openDialog(this.newDialog, this.configuration.newItem ? this.configuration.newItem() : {}, true);
   }
-
+  view(): void {
+      this.openViewDialog();
+  }
   add(): void {
     const dialog = this.openNewDialog();
     if (dialog) {
       dialog.afterClosed().subscribe(data => {
-        this.configuration.dataSource.insert(data).subscribe(() => this.configuration.dataSource.refresh());
+          if (data) {
+              const observable = this.configuration.dataSource.insert(data);
+              if (observable) {
+                  observable.subscribe(() => this.configuration.dataSource.refresh());
+              }
+          }
       });
     }
   }
@@ -216,7 +254,10 @@ export class EditTableComponent<T> implements OnInit {
     if (dialog) {
       dialog.afterClosed().subscribe(data => {
         if (data) {
-          this.configuration.dataSource.update(data).subscribe(() => this.configuration.dataSource.refresh());
+          const observable = this.configuration.dataSource.update(data);
+          if (observable) {
+              observable.subscribe(() => this.configuration.dataSource.refresh());
+          }
         }
       });
     }

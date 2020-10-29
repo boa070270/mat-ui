@@ -8,7 +8,7 @@ import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 export class YesNoDialogComponent {
 
   constructor(public dialogRef: MatDialogRef<YesNoDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: string) { }
+              @Inject(MAT_DIALOG_DATA) public data: {icon?: string; msg: string}) { }
   onNoClick(): void {
     this.dialogRef.close();
   }

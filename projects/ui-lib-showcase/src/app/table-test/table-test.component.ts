@@ -51,6 +51,7 @@ export class TableTestComponent implements OnInit {
 
   ngOnInit(): void {
     this.tableConfiguration = {
+      readonly: false,
       dataSource: new DataSource(this.service),
       newItem: () => ({id: NaN, name: '', type: '', value: ''}),
       getId: (r) => '' + r.id,
