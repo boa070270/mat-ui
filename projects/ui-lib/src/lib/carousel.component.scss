@@ -1,0 +1,17 @@
+.carousel-container {
+  position: relative;
+  overflow-x: hidden;
+  display: block;
+}
+.carousel-items-holder {
+  display: inline-flex;
+  position: relative;
+}
+.carousel-item {
+  margin-left: 3px;
+  margin-right: 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* Centering y-axis */
+  align-items :center; /* Centering x-axis */
+}

@@ -1,3 +1,7 @@
-<div #carousel>
-  <p>Carousel work!</p>
+<div #carousel class="carousel-container" [ngStyle]="{'height.px':heightCarousel, 'width.px':widthItem * showNumberItems}">
+  <div class="carousel-items-holder" [ngStyle]="{'height.px':heightCarousel, 'min-width.px':widthItem * (showNumberItems + 2)}">
+    <div class="carousel-item" *ngFor="let item of items" >
+      <ng-template [ngTemplateOutlet]="itemTemplate" [ngTemplateOutletContext]="{$implicit:item}"></ng-template>
+    </div>
+  </div>
 </div>

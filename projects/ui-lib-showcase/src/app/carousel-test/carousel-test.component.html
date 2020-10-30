@@ -1,3 +1,6 @@
 <div>
-  <lib-carousel></lib-carousel>
+  <lib-carousel [datasource]="datasource" [itemTemplate]="tmpl" showNumberItems="7" [heightCarousel]="120" widthItem="120" ></lib-carousel>
 </div>
+<ng-template #tmpl let-ctx>
+  <img src="{{ctx.src}}" style="max-height: 100px; max-width: 110px; width:auto; height:auto; display: block; margin: auto; top: 0; left: 0; bottom: 0; right: 0;">
+</ng-template>
